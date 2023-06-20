@@ -23,8 +23,9 @@ import time
 
 # Third Party
 import pytest
-import requests
+# import requests
 import tls_test_tools
+import os
 
 # First Party
 import aconfig
@@ -111,9 +112,14 @@ def insecure_http_server():
 
 
 ## Tests #######################################################################
+from fastapi.testclient import TestClient
+
+def test_docs():
+    """Simple check that pinging /docs returns 200"""
+    server = http_server.RuntimeHTTPServer()
+    with TestClient(server.app) as client:
+        response = client.get("/docs")
+        assert response.status_code == 200
 
 
-def test_http_server_docs(insecure_http_server):
-    """Make sure that the docs endpoint can be hit on the sample server"""
-    res = requests.get(f"http://localhost:{insecure_http_server.port}/docs")
-    res.raise_for_status()
+
