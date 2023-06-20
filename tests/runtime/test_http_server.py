@@ -17,6 +17,7 @@ Tests for the caikit HTTP server
 # Standard
 from contextlib import contextmanager
 from dataclasses import dataclass
+import json
 from typing import Optional
 import tempfile
 import time
@@ -33,6 +34,7 @@ import aconfig
 # Local
 from caikit.runtime import http_server
 from tests.conftest import temp_config
+
 
 ## Helpers #####################################################################
 
@@ -114,6 +116,7 @@ def insecure_http_server():
 ## Tests #######################################################################
 from fastapi.testclient import TestClient
 
+
 def test_docs():
     """Simple check that pinging /docs returns 200"""
     server = http_server.RuntimeHTTPServer()
@@ -122,4 +125,13 @@ def test_docs():
         assert response.status_code == 200
 
 
-
+def test_inference(sample_task_model_id):
+    """Simple check that we can ping a model"""
+    server = http_server.RuntimeHTTPServer()
+    with TestClient(server.app) as client:
+        response = client.post(f"/api/v1/{sample_task_model_id}/task/sample", json={"sample_input": {
+            "name": "world"
+        }})
+        assert response.status_code == 200
+        json_response = json.loads(response.content.decode(response.default_encoding))
+        assert json_response["greeting"] == "Hello world"
