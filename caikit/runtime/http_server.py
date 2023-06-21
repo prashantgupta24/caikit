@@ -312,7 +312,7 @@ class RuntimeHTTPServer(RuntimeServerBase):
             request_annotations[OPTIONAL_INPUTS_KEY] = parameters_type
         request_message = make_dataobject(
             name=f"{rpc.request.name}HttpRequest",
-            annotations=request_annotations,
+            annotations=required_params,
             package=pkg_name,
         )
 
