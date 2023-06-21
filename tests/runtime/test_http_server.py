@@ -17,6 +17,7 @@ Tests for the caikit HTTP server
 # Standard
 from contextlib import contextmanager
 from dataclasses import dataclass
+import json
 from typing import Optional
 import tempfile
 import time
@@ -128,7 +129,9 @@ def test_inference(sample_task_model_id):
     """Simple check that we can ping a model"""
     server = http_server.RuntimeHTTPServer()
     with TestClient(server.app) as client:
-        response = client.post(f"/api/v1/{sample_task_model_id}/task/sample", json={"inputs": {
-            "name": "Prashant"
+        response = client.post(f"/api/v1/{sample_task_model_id}/task/sample", json={"sample_input": {
+            "name": "world"
         }})
         assert response.status_code == 200
+        json_response = json.loads(response.content.decode(response.default_encoding))
+        assert json_response["greeting"] == "Hello world"
