@@ -140,6 +140,21 @@ def test_inference(sample_task_model_id):
         assert json_response["greeting"] == "Hello world"
 
 
+def test_inference_optional_field(sample_task_model_id):
+    """Simple check for optional fields"""
+    server = http_server.RuntimeHTTPServer()
+    with TestClient(server.app) as client:
+        json_input = {
+            "inputs": {"sample_input": {"name": "world"}},
+            "parameters": {"throw": True},
+        }
+        response = client.post(
+            f"/api/v1/{sample_task_model_id}/task/sample",
+            json=json_input,
+        )
+        assert response.status_code == 500
+
+
 def test_inference_other_task(other_task_model_id):
     """Simple check that we can ping a model"""
     server = http_server.RuntimeHTTPServer()
