@@ -194,16 +194,37 @@ class GlobalTrainServicer:
                 job's ID and the model's name
         """
 
-        # Figure out where this model will be saved
-        model_path = self._get_model_path(training_output_dir, request.model_name)
+        if isinstance(request, ProtoMessageType):
+            request_params = build_caikit_library_request_dict(
+                request, module.TRAIN_SIGNATURE
+            )
+        else:
+            request_params = kwargs.pop("request_params", None)
 
+        if request_params is None:
+            raise CaikitRuntimeException(
+                StatusCode.INVALID_ARGUMENT,
+                "Could not figoure out params for this request",
+            )
+
+        model_name = getattr(request, "model_name", None)
+        if model_name is None:
+            # try to get it from request_params
+            model_name = request_params.pop("model_name", None)
+        if model_name is None:
+            raise CaikitRuntimeException(
+                StatusCode.INVALID_ARGUMENT,
+                "Model name not provided for this request",
+            )
+        # Figure out where this model will be saved
+        model_path = self._get_model_path(training_output_dir, model_name)
         # Build the full set of kwargs for the train call
         kwargs.update(
             {
                 "module": module,
                 "save_path": model_path,
                 "save_with_id": self.save_with_id,
-                **build_caikit_library_request_dict(request, module.TRAIN_SIGNATURE),
+                **request_params,
             }
         )
 
@@ -223,6 +244,7 @@ class GlobalTrainServicer:
 
             # Register the cancellation callback if given a context
             if context is not None:
+                # TODO: check type of context to be grpc context
 
                 # Create a callback to register termination of training
                 def rpc_termination_callback():
@@ -257,7 +279,7 @@ class GlobalTrainServicer:
 
         # return TrainingJob object
         return TrainingJob(
-            model_name=request.model_name,
+            model_name=model_name,
             training_id=model_future.id,
         )
 
